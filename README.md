@@ -23,6 +23,8 @@ This project implements Direct Digital Synthesis (DDS) using Verilog. The design
 - [Acknowledgments](#acknowledgments)
 
 ## Architecture
+![image](https://github.com/user-attachments/assets/65f42e34-b226-43f3-bbf8-ffba88d02b39)
+
 ### Phase Accumulator
 The phase accumulator keeps track of the waveform's current position. It increments the phase at each clock cycle based on:
 
@@ -35,114 +37,6 @@ This module converts the phase accumulator's output into an amplitude value usin
 
 ### Main Module
 The main module integrates the phase accumulator and phase-to-amplitude converter to generate a sine wave output.
-
-## Verilog Code
-### Phase Accumulator Code
-```verilog
-module phase_accum #(parameter N = 10) (
-    input wire clk,
-    input wire rst,
-    output reg [N-1:0] phase
-);
-
-    parameter PHASE_INC = 8'b1000_0000; // Example for 125 kHz
-    
-    always @(posedge clk or posedge rst) begin
-        if (rst || phase == 10'b11_1111_1111)
-            phase <= 0;
-        else
-            phase <= phase + PHASE_INC;
-    end
-
-endmodule
-```
-
-### Phase to Amplitude Code
-```verilog
-module Phase_to_amp #(parameter N = 10) (
-    input wire [N-1:0] phase,
-    output reg [8:0] out
-);
-
-    always @(*) begin
-        if (phase < 10) out = 200;
-        else if (phase < 20) out = 213;
-        else if (phase < 30) out = 225;
-        else if (phase < 40) out = 237;
-        else out = 0;
-    end
-
-endmodule
-```
-
-### Main Module Code
-```verilog
-module main #(parameter N = 10) (
-    input wire clk,
-    input wire reset,
-    output wire [8:0] out,
-    output wire [N-1:0] phase
-);
-
-    wire [N-1:0] phase;
-
-    phase_accum accum_inst (
-        .clk(clk),
-        .rst(reset),
-        .phase(phase)
-    );
-
-    Phase_to_amp phase_to_amp_inst (
-        .phase(phase),
-        .out(out)
-    );
-
-endmodule
-```
-
-## Testbench
-The testbench verifies the system by applying test cases and storing output values.
-
-```verilog
-`timescale 1ns/1ps
-module tb;
-
-    parameter N = 10;
-    reg clk = 0;
-    reg reset = 0;
-    wire [8:0] out;
-    wire [9:0] phase;
-
-    main #(.N(N)) dut (.clk(clk), .reset(reset), .out(out), .phase(phase));
-
-    always #500 clk = ~clk;
-
-    initial begin
-        reset = 1;
-        #500;
-        reset = 0;
-        #20000;
-        $finish;
-    end
-
-endmodule
-```
-
-## MATLAB Plotting
-The output file is read and plotted in MATLAB.
-
-```matlab
-fid = fopen('sad.txt', 'r');
-data = textscan(fid, 'Time=%f ns, out=%d');
-fclose(fid);
-time = data{1};
-out = data{2};
-figure;
-stairs(time, out, 'LineWidth', 1.5);
-plot(time, out, 'LineWidth', 1.5);
-xlabel('Time (ps)'); ylabel('Output');
-title('Time vs. Output Plot DDS');
-```
 
 ## Results
 ### 125 kHz Sine Wave
